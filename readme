@@ -1,6 +1,6 @@
-# luci-app-advancedplus
+### 访问数：[![](https://visitor-badge.glitch.me/badge?page_id=sirpdboy-visitor-badge)] [![](https://img.shields.io/badge/TG群-点击加入-FFFFFF.svg)](https://t.me/joinchat/AAAAAEpRF88NfOK5vBXGBQ)
 
-这个是专为 酷猫主题而开发的主题设置插件。
+![screenshots](https://raw.githubusercontent.com/sirpdboy/openwrt/master/doc/说明1.jpg)
 
 #【说在前面的话】此次酷猫主题研发借鉴:Opentopd主题、Jerryk大神argon主题、以及thinktip大神的neobird主题的部分灵感及参考借用部分代码，在这里表示感谢，感谢有你们珠玉在前！
 
@@ -27,7 +27,7 @@
 - 发布时间：2023年2月
 - 开源时间：2024年1月
 
-# 功能介绍
+## 功能介绍
 - 原高级设置升级版本，可以编译保存系统、网络、防火墙、DHCP、家长控制、网络唤醒、端口转发、DDNS-GO、SMARTDNS、BYPASS、OPENCLASH、NGINX、DNSMASQ、DDNS等10多个常用功能的配置文件。
 - 进阶设置-高级设置中  可以设置 HTTPS访问、后台菜单、设置向导、QOS自动优化等功能 开启与否等
 - KUCAT主题设置，可以设置 KUCAT主题壁纸和桌面背景来源，是否展开导航栏，清爽模式、每日一言、导航中快捷键设置、关怀模式和主题颜色和方案包括：背景色，透明度，主题亮色暗色，模糊半径等。并且预置7种方案可自行定义更多颜色方案。
