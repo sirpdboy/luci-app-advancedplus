@@ -1,0 +1,128 @@
+#!/bin/sh /etc/rc.common
+# Copyright 2023-2024 sirpdboy team <herboy2008@gmail.com>
+
+START=99
+STOP=15
+
+LOCK=/var/lock/advancedplus-boot.lock
+
+
+cpumodeset()
+{
+for i in 0 1 2 3 ;do
+   echo $1 > /sys/devices/system/cpu/cpufreq/policy$i/scaling_governor
+done
+}
+
+tsoset() {
+ tautocore=/etc/init.d/autocore
+ [ -f $tautocore ] || return
+ if [ "x$(uci -q get advancedplus.@basic[0].tsoset)" = "x1" ]  ;then
+     sed -i 's/tso on/tso off/g' $tautocore
+     $tautocore restart
+else
+     sed -i 's/tso off/tso on/g' $tautocore
+     $tautocore restart
+fi
+}
+
+sethttps() {
+    uhttp=`uci -q get uhttpd.main.listen_https | awk -F ' ' '{printf $1}'`
+    if [ "x$(uci -q get advancedplus.@basic[0].uhttps)" = "x1" ] ; then
+	     [  $uhttp ] || {
+	         sed -i "/listen_https/d" /etc/config/uhttpd
+	         /etc/init.d/uhttpd stop
+	         uci -q add_list uhttpd.main.listen_https='0.0.0.0:443'
+	         uci -q add_list uhttpd.main.listen_https='[::]:443'
+	         uci commit uhttpd
+	         /etc/init.d/uhttpd restart
+	    }
+    else
+        [  $uhttp ] &&
+	{
+	     /etc/init.d/uhttpd stop
+	    sed -i "/listen_https/d" /etc/config/uhttpd
+	    uci commit uhttpd
+	    /etc/init.d/uhttpd restart
+	}
+    fi
+}
+
+setnetwizard(){
+    if [ "x$(uci -q get advancedplus.@basic[0].wizard)" == "x1" ] ; then
+	     touch /etc/config/netwizard_hide
+	     uci -q set netwizard.default.showhide="1"
+	     uci commit netwizard
+    else
+	     uci -q set netwizard.default.showhide="0"
+	     uci commit netwizard
+	     rm -rf /etc/config/netwizard_hide
+    fi
+}
+
+set_firewall_wan() {
+wanwan=`uci -q get advancedplus.@basic[0].set_firewall_wan`
+if [ -n $wanwan ] ; then
+    uci -q set firewall.@zone[1].input=$wanwan
+    uci commit firewall
+fi
+}
+
+set_login() {
+    if [ "x$(uci -q get advancedplus.@basic[0].set_login)" == "x1" ] ; then
+	sed -i '$ s|exec /bin/sh -l$|exec /bin/login|' /usr/libexec/login.sh
+    else
+	sed -i '$ s|exec /bin/login$|exec /bin/sh -l|' /usr/libexec/login.sh
+    fi
+}
+
+dhcp_domain() {
+    if [ "x$(uci -q get advancedplus.@basic[0].dhcp_domain)" = "x1" ] ; then
+        local domain_name="time.android.com"
+        local domain_ip="203.107.6.88"
+        existing_records=$(uci show dhcp | grep "dhcp.@domain\[[0-9]\+\].name='$domain_name'")
+        if [ -z "$existing_records" ]; then
+        uci add dhcp domain
+        uci -q set "dhcp.@domain[-1].name=$domain_name"
+        uci -q set "dhcp.@domain[-1].ip=$domain_ip"
+        uci commit dhcp
+        fi
+    else
+       existing_records=$(uci show dhcp | grep "dhcp.@domain\[[0-9]\+\].name='$domain_name'")
+       if [ -z "$existing_records" ]; then
+       uci delete dhcp.@domain[-1].name
+       uci delete dhcp.@domain[-1].ip
+       uci commit dhcp
+       fi
+    fi
+}
+advancedset(){
+    dev=`ifconfig | grep "Point-to-Point" | cut -d " " -f1`
+    [ ! $dev ] && dev=` uci -q get network.wan.ifname ` || dev=` uci -q get network.wan.device ` 
+    [ ! $dev ] && dev=br-lan
+    setnetwizard
+    set_login
+    # set_firewall_wan
+    tsoset
+    sed -i "\/bin\/zsh/d" /etc/profile
+    [ "x$(uci -q get advancedplus.@basic[0].usshmenu)" = "x1" ] || echo '/usr/bin/zsh'  >> /etc/profile
+}
+
+start() {
+    [ -f $LOCK ] && exit
+    [ "x$XBOOT" = "x1" ] && exit 0
+    touch $LOCK
+    advancedset
+    rm -rf /tmp/luci-*
+    rm -f $LOCK 2>/dev/null
+}
+
+stop() {
+rm -rf /tmp/luci*
+rm -f $LOCK 2>/dev/null
+}
+
+boot() {
+	XBOOT=1 start
+}
+

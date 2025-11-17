@@ -1,0 +1,5 @@
+#!/bin/sh
+chmod +x /etc/init.d/advancedplus
+
+rm -f /tmp/luci-indexcache
+exit 0
